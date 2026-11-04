@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>认识电脑好朋友 🖥️ 小学生小游戏</title>
+<!-- ============ 样式 ============ -->
+<style>
+  /* 全局：卡通可爱风，大字体 */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+    background: linear-gradient(135deg, #ffe7a0 0%, #ffc3a0 50%, #ffafbd 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    overflow-x: hidden;
+  }
+
+  /* 游戏主容器 */
+  #game {
+    width: 900px;
+    max-width: 96vw;
+    background: #ffffff;
+    border-radius: 30px;
+    box-shadow: 0 15px 50px rgba(0,0,0,0.2);
+    padding: 30px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* 顶部信息栏 */
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  .title {
+    font-size: 28px;
+    color: #ff6b6b;
+    font-weight: 900;
+    text-shadow: 2px 2px 0 #ffe7a0;
+  }
+  .score-box {
+    background: #4ecdc4;
+    color: #fff;
+    padding: 10px 22px;
+    border-radius: 30px;
+    font-size: 22px;
+    font-weight: bold;
+    box-shadow: 0 4px 0 #2fa89f;
+  }
+  .level-box {
+    background: #ffb347;
+    color: #fff;
+    padding: 10px 22px;
+    border-radius: 30px;
+    font-size: 22px;
+    font-weight: bold;
+    box-shadow: 0 4px 0 #e08e1e;
+  }
+
+  /* 题目区 */
+  .question {
+    background: #fff3cd;
+    border: 4px dashed #ffb347;
+    border-radius: 20px;
+    padding: 20px;
+    text-align: center;
+    font-size: 26px;
+    font-weight: bold;
+    color: #5a3e2b;
+    margin-bottom: 25px;
+    min-height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 游戏舞台 */
+  .stage {
+    background: linear-gradient(180deg, #e3f2fd 0%, #c8e6c9 100%);
+    border-radius: 20px;
+    min-height: 400px;
+    padding: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+  }
+
+  /* ============ 关卡1：硬件卡片 ============ */
+  .hardware-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    width: 100%;
+  }
+  .hw-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 15px 10px;
+    cursor: pointer;
+    text-align: center;
+    transition: transform 0.15s ease;
+    border: 4px solid transparent;
+    box-shadow: 0 6px 0 rgba(0,0,0,0.08);
+    user-select: none;
+  }
+  .hw-card:hover { transform: translateY(-4px); }
+  .hw-card svg { width: 100%; height: 130px; }
+  .hw-name {
+    font-size: 20px;
+    font-weight: bold;
+    color: #333;
+    margin-top: 5px;
+  }
+
+  /* ============ 关卡2：鼠标 ============ */
+  .mouse-wrap {
+    position: relative;
+  }
+  .mouse-wrap svg { width: 300px; height: 400px; cursor: pointer; }
+  .mouse-part {
+    cursor: pointer;
+    transition: fill 0.2s;
+  }
+  .mouse-part:hover { opacity: 0.8; }
+
+  /* ============ 关卡3：键盘 ============ */
+  .keyboard-wrap {
+    background: #37474f;
+    padding: 25px;
+    border-radius: 20px;
+    box-shadow: 0 8px 0 #263238;
+  }
+  .keyboard-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+    justify-content: center;
+  }
+  .key {
+    background: #eceff1;
+    border-radius: 10px;
+    padding: 15px 18px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #37474f;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #b0bec5;
+    transition: transform 0.08s;
+    min-width: 55px;
+    text-align: center;
+    user-select: none;
+  }
+  .key:hover { transform: translateY(-2px); }
+  .key:active { transform: translateY(2px); box-shadow: 0 2px 0 #b0bec5; }
+  .key.wide { min-width: 110px; }
+  .key.extra-wide { min-width: 260px; }
+
+  /* ============ 反馈动画 ============ */
+  .feedback-correct {
+    animation: correctFlash 0.6s ease;
+  }
+  .feedback-wrong {
+    animation: wrongShake 0.5s ease;
+  }
+  @keyframes correctFlash {
+    0% { box-shadow: 0 0 0 0 rgba(76,175,80,0.9); background: #c8e6c9; }
+    50% { box-shadow: 0 0 0 20px rgba(76,175,80,0); }
+    100% {}
+  }
+  @keyframes wrongShake {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-10px); }
+    40% { transform: translateX(10px); }
+    60% { transform: translateX(-6px); }
+    80% { transform: translateX(6px); }
+  }
+
+  /* 浮动提示文字 */
+  .float-msg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 48px;
+    font-weight: 900;
+    pointer-events: none;
+    animation: floatUp 1s ease forwards;
+    z-index: 10;
+    text-shadow: 3px 3px 0 rgba(0,0,0,0.2);
+  }
+  .float-msg.ok { color: #4caf50; }
+  .float-msg.no { color: #f44336; }
+  @keyframes floatUp {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+    30% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+    100% { opacity: 0; transform: translate(-50%, -120%) scale(1); }
+  }
+
+  /* ============ 按钮 ============ */
+  .btn-row {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+  }
+  .btn {
+    padding: 12px 30px;
+    border: none;
+    border-radius: 30px;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.1s;
+    color: #fff;
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .btn:active { transform: translateY(1px); }
+  .btn-restart { background: #ff6b6b; box-shadow: 0 5px 0 #c94a4a; }
+  .btn-next { background: #4ecdc4; box-shadow: 0 5px 0 #2fa89f; display:none; }
+  .btn-start { background: #ffb347; box-shadow: 0 5px 0 #e08e1e; font-size:26px; padding:18px 50px;}
+
+  /* ============ 弹窗 ============ */
+  .modal-mask {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+  }
+  .modal {
+    background: #fff;
+    border-radius: 30px;
+    padding: 40px 60px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    animation: popIn 0.5s ease;
+  }
+  .modal h2 {
+    font-size: 42px;
+    color: #ff6b6b;
+    margin-bottom: 20px;
+  }
+  .modal p {
+    font-size: 24px;
+    color: #555;
+    margin-bottom: 25px;
+  }
+  @keyframes popIn {
+    0% { transform: scale(0.3); opacity: 0; }
+    70% { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(1); }
+  }
+
+  /* 关卡圆点指示器 */
+  .dots {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 15px;
+  }
+  .dot {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: #ddd;
+    transition: all 0.3s;
+  }
+  .dot.active { background: #ff6b6b; transform: scale(1.3); }
+  .dot.done { background: #4caf50; }
+
+  /* 开始界面 */
+  .start-screen { text-align: center; padding: 60px 20px; }
+  .start-screen h1 {
+    font-size: 48px;
+    color: #ff6b6b;
+    margin-bottom: 20px;
+    text-shadow: 3px 3px 0 #ffe7a0;
+  }
+  .start-screen p {
+    font-size: 22px;
+    color: #5a3e2b;
+    margin-bottom: 40px;
+  }
+</style>
+</head>
+<body>
+
+<div id="game">
+  <!-- 开始界面 -->
+  <div id="screen-start" class="start-screen">
+    <h1>🖥️ 认识电脑好朋友</h1>
+    <p>小朋友，让我们一起来认识电脑的各个部件吧！<br>一共 3 关，加油闯关哦~</p>
+    <button class="btn btn-start" onclick="game.start()">开始游戏 🚀</button>
+  </div>
+
+  <!-- 游戏主界面 -->
+  <div id="screen-game" style="display:none;">
+    <div class="topbar">
+      <div class="title">🎮 认识电脑</div>
+      <div class="level-box">第 <span id="curLevel">1</span> / 3 关</div>
+      <div class="score-box">⭐ <span id="curScore">0</span> 分</div>
+    </div>
+
+    <div class="question" id="question">准备好啦，点击下面的开始按钮！</div>
+
+    <div class="stage" id="stage">
+      <!-- 由 JS 动态渲染关卡内容 -->
+    </div>
+
+    <div class="dots" id="dots">
+      <div class="dot" data-lv="1"></div>
+      <div class="dot" data-lv="2"></div>
+      <div class="dot" data-lv="3"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-restart" onclick="game.restart()">🔄 重新开始</button>
+      <button class="btn btn-next" id="btnNext" onclick="game.nextLevel()">下一关 ➡️</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 游戏脚本 ============ -->
+<script>
+/* =========================================================
+   音效模块：使用 Web Audio API 生成简单音调，无需外部资源
+   ========================================================= */
+const Sound = {
+  ctx: null,
+  ensure() {
+    if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+  },
+  // 播放一个音调（频率、时长、类型）
+  tone(freq, dur = 0.2, type = 'sine', vol = 0.3) {
+    this.ensure();
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+    gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + dur);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start();
+    osc.stop(this.ctx.currentTime + dur);
+  },
+  // 答对：上升欢快的三连音
+  correct() {
+    this.tone(660, 0.12, 'triangle');
+    setTimeout(() => this.tone(880, 0.12, 'triangle'), 120);
+    setTimeout(() => this.tone(990, 0.2, 'triangle'), 240);
+  },
+  // 答错：下降低沉音
+  wrong() {
+    this.tone(300, 0.15, 'sawtooth');
+    setTimeout(() => this.tone(200, 0.2, 'sawtooth'), 130);
+  },
+  // 通关音效
+  win() {
+    const notes = [523, 659, 784, 1047];
+    notes.forEach((n, i) => setTimeout(() => this.tone(n, 0.25, 'triangle', 0.35), i * 180));
+  }
+};
+
+/* =========================================================
+   关卡数据
+   ========================================================= */
+// 关卡1：硬件（4种，每个都是一题）
+const level1Data = [
+  { id: 'monitor',  q: '请点击👉【显示器】',   name: '显示器' },
+  { id: 'case',      q: '请点击👉【电脑主机】', name: '主机'   },
+  { id: 'mouse',     q: '请点击👉【鼠标】',     name: '鼠标'   },
+  { id: 'keyboard',  q: '请点击👉【键盘】',     name: '键盘'   }
+];
+
+// 关卡2：鼠标三个部位（随机抽 3 题）
+const level2Data = [
+  { id: 'left',  q: '请点击👉【鼠标左键】',  name: '左键' },
+  { id: 'right', q: '请点击👉【鼠标右键】',  name: '右键' },
+  { id: 'wheel', q: '请点击👉【鼠标滚轮】',  name: '滚轮' }
+];
+
+// 关卡3：键盘按键（随机抽 4 题）
+const level3Data = [
+  { id: 'enter',  q: '请点击👉【回车键 Enter】',     name: '回车' },
+  { id: 'space',  q: '请点击👉【空格键 Space】',     name: '空格' },
+  { id: 'shift',  q: '请点击👉【Shift 键】',         name: 'Shift' },
+  { id: 'back',   q: '请点击👉【退格键 Backspace】', name: '退格' }
+];
+
+/* =========================================================
+   SVG 图形：显示器、主机、鼠标、键盘按键
+   ========================================================= */
+
+// 硬件：显示器 SVG（扁平卡通）
+function svgMonitor() {
+  return `<svg viewBox="0 0 150 130">
+    <!-- 屏幕 -->
+    <rect x="15" y="10" width="120" height="85" rx="8" fill="#2c3e50"/>
+    <rect x="22" y="17" width="106" height="71" rx="4" fill="#4ecdc4"/>
+    <!-- 屏幕反光 -->
+    <rect x="25" y="20" width="40" height="55" rx="2" fill="rgba(255,255,255,0.25)"/>
+    <!-- 底座 -->
+    <rect x="60" y="95" width="30" height="10" fill="#2c3e50"/>
+    <ellipse cx="75" cy="110" rx="45" ry="6" fill="#34495e"/>
+  </svg>`;
+}
+
+// 硬件：主机 SVG
+function svgCase() {
+  return `<svg viewBox="0 0 150 130">
+    <rect x="25" y="10" width="100" height="110" rx="10" fill="#34495e"/>
+    <rect x="35" y="20" width="80" height="8" rx="2" fill="#2c3e50"/>
+    <!-- 光盘口 -->
+    <rect x="35" y="35" width="60" height="14" rx="3" fill="#2c3e50"/>
+    <!-- 指示灯 -->
+    <circle cx="110" cy="30" r="4" fill="#e74c3c"/>
+    <circle cx="120" cy="30" r="4" fill="#f1c40f"/>
+    <!-- 侧面阴影 -->
+    <rect x="115" y="10" width="10" height="110" rx="0 10 10 0" fill="rgba(0,0,0,0.15)"/>
+  </svg>`;
+}
+
+// 硬件：鼠标 SVG
+function svgMouse() {
+  return `<svg viewBox="0 0 150 130">
+    <!-- 鼠标主体 -->
+    <path d="M35,40 Q35,10 75,10 Q115,10 115,40 L115,100 Q115,120 75,120 Q35,120 35,100 Z" fill="#ecf0f1" stroke="#bdc3c7" stroke-width="2"/>
+    <!-- 中缝 -->
+    <line x1="75" y1="10" x2="75" y2="50" stroke="#bdc3c7" stroke-width="2"/>
+    <!-- 滚轮 -->
+    <rect x="68" y="25" width="14" height="20" rx="3" fill="#95a5a6"/>
+  </svg>`;
+}
+
+// 硬件：键盘 SVG
+function svgKeyboard() {
+  return `<svg viewBox="0 0 150 130">
+    <rect x="5" y="20" width="140" height="100" rx="10" fill="#37474f"/>
+    <!-- 若干小按键简化表示 -->
+    ${rowKeys(['Esc','F1','F2','F3','F4','F5','F6','F7','F8'], 20, 30)}
+    ${rowKeys(['Q','W','E','R','T','Y','U','I','O','P'], 20, 50)}
+    ${rowKeys(['A','S','D','F','G','H','J','K','L'], 20, 70)}
+    ${rowKeys(['Shift','Z','X','C','V','B','N','M'], 20, 90)}
+    ${rowKeys(['Ctrl','Alt','   空格   ','Alt','Ctrl'], 20, 110)}
+  </svg>`;
+}
+function rowKeys(labels, startY, rowY) {
+  let s = '';
+  let x = startY;
+  labels.forEach(lbl => {
+    const w = lbl.length > 3 ? 18 : 10;
+    s += `<rect x="${x}" y="${rowY}" width="${w*3}" height="12" rx="2" fill="#eceff1" stroke="#b0bec5" stroke-width="1"/>`;
+    x += w*3 + 2;
+  });
+  return s;
+}
+
+// 关卡2：带点击区域的鼠标 SVG（三部分可点）
+function svgClickableMouse() {
+  return `<svg viewBox="0 0 300 400" id="mouseSvg">
+    <!-- 左键区域 -->
+    <path class="mouse-part" data-part="left"
+      d="M80,120 Q80,30 150,30 L150,180 L80,180 Q60,180 60,220 L60,330 Q60,370 150,370 L150,180 Z"
+      fill="#ecf0f1" stroke="#7f8c8d" stroke-width="3"/>
+    <!-- 右键区域 -->
+    <path class="mouse-part" data-part="right"
+      d="M220,120 Q220,30 150,30 L150,180 L220,180 Q240,180 240,220 L240,330 Q240,370 150,370 L150,180 Z"
+      fill="#dfe6e9" stroke="#7f8c8d" stroke-width="3"/>
+    <!-- 滚轮 -->
+    <rect class="mouse-part" data-part="wheel"
+      x="138" y="140" width="24" height="60" rx="6"
+      fill="#95a5a6" stroke="#7f8c8d" stroke-width="2"/>
+    <!-- 标注文字 -->
+    <text x="115" y="100" font-size="18" fill="#2c3e50" font-weight="bold">左键</text>
+    <text x="170" y="100" font-size="18" fill="#2c3e50" font-weight="bold">右键</text>
+    <text x="110" y="230" font-size="12" fill="#2c3e50" font-weight="bold">滚轮</text>
+  </svg>`;
+}
+
+/* =========================================================
+   游戏主对象
+   ========================================================= */
+const game = {
+  score: 0,          // 当前总分
+  level: 1,          // 当前关卡 1/2/3
+  questions: [],     // 当前关卡题目队列
+  qIndex: 0,         // 当前题号
+  locked: false,     // 答题锁定（防连点）
+
+  // 开始游戏（从开始界面进入）
+  start() {
+    document.getElementById('screen-start').style.display = 'none';
+    document.getElementById('screen-game').style.display = 'block';
+    this.score = 0;
+    this.level = 1;
+    this.updateHUD();
+    this.loadLevel(1);
+  },
+
+  // 重新开始
+  restart() {
+    this.score = 0;
+    this.level = 1;
+    this.updateHUD();
+    document.getElementById('btnNext').style.display = 'none';
+    this.loadLevel(1);
+    // 清除弹窗
+    const mask = document.querySelector('.modal-mask');
+    if (mask) mask.remove();
+  },
+
+  // 更新顶部显示
+  updateHUD() {
+    document.getElementById('curScore').textContent = this.score;
+    document.getElementById('curLevel').textContent = this.level;
+    document.querySelectorAll('.dot').forEach(d => {
+      const lv = parseInt(d.dataset.lv);
+      d.classList.remove('active', 'done');
+      if (lv < this.level) d.classList.add('done');
+      else if (lv === this.level) d.classList.add('active');
+    });
+  },
+
+  // 载入关卡
+  loadLevel(lv) {
+    this.level = lv;
+    this.qIndex = 0;
+    document.getElementById('btnNext').style.display = 'none';
+    this.updateHUD();
+    let pool;
+    if (lv === 1) pool = level1Data.slice();
+    else if (lv === 2) pool = shuffle(level2Data.slice());
+    else pool = shuffle(level3Data.slice());
+    this.questions = pool;
+    this.renderQuestion();
+  },
+
+  // 渲染题目与舞台
+  renderQuestion() {
+    const q = this.questions[this.qIndex];
+    document.getElementById('question').textContent = q.q;
+    const stage = document.getElementById('stage');
+    stage.innerHTML = '';
+    this.locked = false;
+
+    if (this.level === 1) this.renderLevel1(stage);
+    else if (this.level === 2) this.renderLevel2(stage);
+    else this.renderLevel3(stage);
+  },
+
+  /* ---------- 关卡1 ---------- */
+  renderLevel1(stage) {
+    const grid = document.createElement('div');
+    grid.className = 'hardware-grid';
+    grid.innerHTML = `
+      ${hwCard('monitor',  '显示器',  svgMonitor())}
+      ${hwCard('case',    '主机',    svgCase())}
+      ${hwCard('mouse',   '鼠标',    svgMouse())}
+      ${hwCard('keyboard','键盘',    svgKeyboard())}
+    `;
+    stage.appendChild(grid);
+
+    // 绑定点击
+    grid.querySelectorAll('.hw-card').forEach(card => {
+      card.addEventListener('click', () => this.checkAnswer(card.dataset.id, card));
+    });
+  },
+
+  /* ---------- 关卡2 ---------- */
+  renderLevel2(stage) {
+    const wrap = document.createElement('div');
+    wrap.className = 'mouse-wrap';
+    wrap.innerHTML = svgClickableMouse();
+    stage.appendChild(wrap);
+
+    wrap.querySelectorAll('.mouse-part').forEach(p => {
+      p.addEventListener('click', () => {
+        this.checkAnswer(p.dataset.part, p);
+      });
+    });
+  },
+
+  /* ---------- 关卡3 ---------- */
+  renderLevel3(stage) {
+    const kb = document.createElement('div');
+    kb.className = 'keyboard-wrap';
+    // 只把出题会用到的按键做成可点击的
+    kb.innerHTML = `
+      <div class="keyboard-row">
+        <div class="key" data-id="back">退格<br>Backspace</div>
+      </div>
+      <div class="keyboard-row">
+        <div class="key wide" data-id="shift">Shift</div>
+      </div>
+      <div class="keyboard-row">
+        <div class="key" data-id="enter">回车<br>Enter</div>
+      </div>
+      <div class="keyboard-row">
+        <div class="key extra-wide" data-id="space">空格键 Space</div>
+      </div>
+    `;
+    stage.appendChild(kb);
+    kb.querySelectorAll('.key').forEach(k => {
+      k.addEventListener('click', () => this.checkAnswer(k.dataset.id, k));
+    });
+  },
+
+  // 判定答案
+  checkAnswer(selectedId, targetEl) {
+    if (this.locked) return;
+    const q = this.questions[this.qIndex];
+    this.locked = true;
+
+    if (selectedId === q.id) {
+      // 答对
+      this.score += 10;
+      Sound.correct();
+      this.showFloat('正确！🎉', 'ok');
+      targetEl.classList.add('feedback-correct');
+      // 1秒后进入下一题
+      setTimeout(() => this.nextQuestion(), 900);
+    } else {
+      // 答错
+      Sound.wrong();
+      this.showFloat('再想想 😅', 'no');
+      targetEl.classList.add('feedback-wrong');
+      setTimeout(() => {
+        targetEl.classList.remove('feedback-wrong');
+        this.locked = false;
+      }, 600);
+    }
+    this.updateHUD();
+  },
+
+  // 显示浮动提示文字
+  showFloat(text, cls) {
+    const stage = document.getElementById('stage');
+    const msg = document.createElement('div');
+    msg.className = `float-msg ${cls}`;
+    msg.textContent = text;
+    stage.appendChild(msg);
+    setTimeout(() => msg.remove(), 1000);
+  },
+
+  // 下一题 / 下一关
+  nextQuestion() {
+    this.qIndex++;
+    if (this.qIndex < this.questions.length) {
+      this.renderQuestion();
+    } else {
+      // 本关完成
+      if (this.level < 3) {
+        document.getElementById('question').textContent = `✨ 第 ${this.level} 关完成！当前 ${this.score} 分`;
+        document.getElementById('stage').innerHTML =
+          '<div style="font-size:48px;color:#4caf50;font-weight:bold;">太棒了！过关啦 🌟</div>';
+        document.getElementById('btnNext').style.display = 'inline-block';
+      } else {
+        // 全部通关
+        this.showWinModal();
+      }
+    }
+  },
+
+  nextLevel() {
+    document.getElementById('btnNext').style.display = 'none';
+    this.loadLevel(this.level + 1);
+  },
+
+  // 通关弹窗
+  showWinModal() {
+    Sound.win();
+    const mask = document.createElement('div');
+    mask.className = 'modal-mask';
+    mask.innerHTML = `
+      <div class="modal">
+        <h2>🏆 恭喜通关！</h2>
+        <p>你已经认识了所有电脑好朋友！<br>最终得分：<b style="color:#ff6b6b;font-size:30px;">${this.score}</b> 分</p>
+        <button class="btn btn-restart" onclick="document.querySelector('.modal-mask').remove();game.restart();">🔄 再玩一次</button>
+      </div>
+    `;
+    document.body.appendChild(mask);
+  }
+};
+
+/* =========================================================
+   工具：随机洗牌
+   ========================================================= */
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/* =========================================================
+   生成关卡1的硬件卡片 HTML
+   ========================================================= */
+function hwCard(id, name, svgHtml) {
+  return `<div class="hw-card" data-id="${id}">
+    ${svgHtml}
+    <div class="hw-name">${name}</div>
+  </div>`;
+}
+</script>
+</body>
+</html>
